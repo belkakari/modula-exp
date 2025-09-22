@@ -4,33 +4,10 @@ from modula.abstract import Identity
 from modula.atom import Linear
 from modula.bond import GeLU
 
-from .atoms import Bias, Scale
-from .bonds import Constant, LayerNorm, Mean
+from src.common.atoms import Bias, Scale
+from src.common.bonds import Constant, LayerNorm, Mean
+
 from .modules import MLP, AttentionViT, LabelEmbed, PatchEmbed, TimestepEmbed, posemb_sincos_2d
-
-
-def DiT(
-    vocab_size, num_heads, d_hidden, d_query, d_value, num_blocks, blocks_mass=5, attention_scale=1.0, final_scale=1.0
-):
-    # Let's create attention and MLP layers.
-    att = AttentionModula(num_heads, d_hidden, d_query, d_value, attention_scale)
-    mlp = Linear(d_hidden, 4 * d_hidden) @ GeLU() @ Linear(4 * d_hidden, d_hidden)
-
-    # For our residual connections, L = 2*num_blocks because each block has two residual connections.
-    att_block = (1 - 1 / (2 * num_blocks)) * Identity() + 1 / (2 * num_blocks) * att
-    mlp_block = (1 - 1 / (2 * num_blocks)) * Identity() + 1 / (2 * num_blocks) * mlp
-
-    # We can use powers of a module to compose it with itself many times!
-    blocks = (mlp_block @ att_block) ** num_blocks
-
-    # Set all transformer blocks to have mass 5 (by default).
-    # So 5/7 of the change in the network output is due to the blocks,
-    # and 2/7 of the change in output is due to the embedding and out projection.
-    blocks.tare(absolute=blocks_mass)
-
-    out = final_scale * Linear(vocab_size, d_hidden)
-
-    return out @ blocks
 
 
 def ViT(

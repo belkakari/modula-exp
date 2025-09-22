@@ -27,7 +27,7 @@ class Muon(Optimizer):
 
     def update(self, params, grads, state):
         buf = jax.tree.map(
-            lambda m, g: self.config.beta1 * m + (1 - self.config.beta1) * g,
+            lambda m, g: self.config["beta1"] * m + (1 - self.config["beta1"]) * g,
             state,
             grads,
         )
@@ -44,9 +44,9 @@ class Adam(Optimizer):
 
     def update(self, params, grads, state):
         m, v = state
-        m_new = jax.tree.map(lambda m, g: self.config.beta1 * m + (1 - self.config.beta1) * g, m, grads)
+        m_new = jax.tree.map(lambda m, g: self.config["beta1"] * m + (1 - self.config["beta1"]) * g, m, grads)
         v_new = jax.tree.map(
-            lambda v, g: self.config.beta2 * v + (1 - self.config.beta2) * g**2,
+            lambda v, g: self.config["beta2"] * v + (1 - self.config["beta2"]) * g**2,
             v,
             grads,
         )
@@ -56,9 +56,21 @@ class Adam(Optimizer):
 
 def get_optimizer(config):
     """Factory function to create an optimizer instance."""
-    if config.optimizer == "muon":
+    if config["optimizer"] == "muon":
         return Muon(config)
-    elif config.optimizer == "adam":
+    elif config["optimizer"] == "adam":
         return Adam(config)
     else:
-        raise ValueError(f"Unknown optimizer: {config.optimizer}")
+        raise ValueError(f"Unknown optimizer: {config['optimizer']}")
+
+
+def get_lr(schedule, lr, step, steps):
+    """Get learning rate based on schedule."""
+    schedule_fn = {
+        "linear": lambda s: (steps - s) / steps,
+        "cosine": lambda s: 0.5 * (1 + jnp.cos(jnp.pi * s / steps)),
+        "sqrt": lambda s: 1 / (1 + (s // 512) ** 0.5),
+        "none": lambda s: 1,
+    }[schedule]
+
+    return lr * schedule_fn(step)

@@ -15,9 +15,9 @@ To run a simple INR MLP training
 python fit_inr.py -c src/INR/config.yaml
 ```
 ### Results
-| input                             | with gradient dualization           | without gradient dualization             |
-| --------------------------------- | ----------------------------------- | ---------------------------------------- |
-| ![input](./static/inr_target.jpg) | ![dual grad](./static/inr_dual.jpg) | ![no dual grad](./static/inr_simple.jpg) |
+| input                             | with gradient dualization           | without gradient dualization             | adam                           | muon                           |
+| --------------------------------- | ----------------------------------- | ---------------------------------------- | ------------------------------ | ------------------------------ |
+| ![input](./static/inr_target.jpg) | ![dual grad](./static/inr_dual.jpg) | ![no dual grad](./static/inr_simple.jpg) | ![adam](./static/inr_adam.jpg) | ![muon](./static/inr_muon.jpg) |
 
 ## DiT
 Based on [DiT JAX implementation](https://github.com/kvfrans/jax-diffusion-transformer), [modula ViT PR](https://github.com/modula-systems/modula/pull/10) and [modula GPT example](https://docs.modula.systems/examples/hello-gpt/)

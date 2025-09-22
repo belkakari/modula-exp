@@ -2,8 +2,8 @@ import jax.numpy as jnp
 from modula.atom import Embed, Linear
 from modula.bond import ApplyAttentionScores, AttentionQK, CausalMask, GeLU, MergeHeads, Rope, Softmax, SplitIntoHeads
 
-from .atoms import Bias
-from .bonds import Patchify, SiLU, TimestepEmb
+from src.common.atoms import Bias
+from src.common.bonds import Patchify, SiLU, TimestepEmb
 
 
 def AttentionViT(num_heads, d_embed, d_query, d_value, softmax_scale, causal, posemb="rope", bias=False):
