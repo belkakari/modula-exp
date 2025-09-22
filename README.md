@@ -14,6 +14,9 @@ To run a simple INR MLP training
 ```bash
 python fit_inr.py -c src/INR/config.yaml
 ```
+| input | with gradient dualization | without gradient dualization |
+|-|-|-|
+|![input](./static/inr_target.jpg)|![dual grad](./static/inr_dual.jpg)|![no dual grad](./static/inr_simple.jpg)|
 
 ## Develop
 Don't forget to set up pre-commit before commiting

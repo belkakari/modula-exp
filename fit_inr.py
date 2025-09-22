@@ -1,5 +1,6 @@
 import argparse
 import logging
+import shutil
 from pathlib import Path
 
 import jax
@@ -10,7 +11,7 @@ from modula.atom import Linear
 from modula.bond import ReLU
 from PIL import Image
 
-from src.INR.modules import FourierFeats
+from src.INR.modules import FourierFeats, LinearSimple
 from src.INR.utils import get_grid
 
 parser = argparse.ArgumentParser(description="Train videofitting")
@@ -32,8 +33,10 @@ seed = config["seed"]
 val_freq = config["val_freq"]
 folder = Path(config["out_folder"])
 img_path = config["img_path"]
+dualize_gradients = config["dualize_gradients"]
 
 folder.mkdir(parents=True, exist_ok=True)
+shutil.copy(config_path, folder / "config.yaml")
 
 log = logging.getLogger(__name__)
 logging.basicConfig(
@@ -59,12 +62,22 @@ targets = target[None].reshape(-1, C)
 input_dim = inputs.shape[-1]
 output_dim = targets.shape[-1]
 
-mlp = Linear(output_dim, width)
-mlp @= ReLU()
-mlp @= Linear(width, width)
-mlp @= ReLU()
-mlp @= Linear(width, input_dim * 2)
-mlp @= FourierFeats(input_dim, input_dim)
+if dualize_gradients:
+    log.info("Dualizing gradients")
+    mlp = Linear(output_dim, width)
+    mlp @= ReLU()
+    mlp @= Linear(width, width)
+    mlp @= ReLU()
+    mlp @= Linear(width, input_dim * 2)
+    mlp @= FourierFeats(input_dim, input_dim)
+else:
+    log.info("Not dualizing gradients")
+    mlp = LinearSimple(output_dim, width)
+    mlp @= ReLU()
+    mlp @= LinearSimple(width, width)
+    mlp @= ReLU()
+    mlp @= LinearSimple(width, input_dim * 2)
+    mlp @= FourierFeats(input_dim, input_dim)
 
 print(mlp)
 
@@ -108,3 +121,7 @@ gen_img_np = np.array(mlp(inputs, w).reshape(H, W, C))
 gen_img_np = np.clip(gen_img_np, -1, 1)
 gen_img_np = ((gen_img_np / 2 + 0.5) * 255).astype(np.uint8)
 Image.fromarray(gen_img_np).save(folder / f"{step}.jpg")
+
+target_img_np = np.array(targets.reshape(H, W, C))
+target_img_np = ((target_img_np / 2 + 0.5) * 255).astype(np.uint8)
+Image.fromarray(target_img_np).save(folder / "target.jpg")
