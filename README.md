@@ -4,7 +4,7 @@
 ## Setup
 ```bash
 pip install uv
-uv venv --python=3.12. # or whichever you like
+uv venv --python=3.12  # or whichever you like
 source .venv/bin/activate
 uv sync
 ```
