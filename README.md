@@ -14,9 +14,13 @@ To run a simple INR MLP training
 ```bash
 python fit_inr.py -c src/INR/config.yaml
 ```
-| input | with gradient dualization | without gradient dualization |
-|-|-|-|
-|![input](./static/inr_target.jpg)|![dual grad](./static/inr_dual.jpg)|![no dual grad](./static/inr_simple.jpg)|
+### Results
+| input                             | with gradient dualization           | without gradient dualization             |
+| --------------------------------- | ----------------------------------- | ---------------------------------------- |
+| ![input](./static/inr_target.jpg) | ![dual grad](./static/inr_dual.jpg) | ![no dual grad](./static/inr_simple.jpg) |
+
+## DiT
+Based on [DiT JAX implementation](https://github.com/kvfrans/jax-diffusion-transformer), [modula ViT PR](https://github.com/modula-systems/modula/pull/10) and [modula GPT example](https://docs.modula.systems/examples/hello-gpt/)
 
 ## Develop
 Don't forget to set up pre-commit before commiting
