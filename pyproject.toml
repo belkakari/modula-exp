@@ -1,0 +1,19 @@
+[project]
+name = "modula-exp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "jax>=0.7.2",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.6",
+    "modula",
+    "numpy>=2.3.3",
+    "opencv-python>=4.11.0.86",
+    "pillow>=11.3.0",
+    "pre-commit>=4.3.0",
+]
+
+[tool.uv.sources]
+modula = { git = "https://github.com/modula-systems/modula.git" }
