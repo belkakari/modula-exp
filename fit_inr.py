@@ -9,6 +9,7 @@ import numpy as np
 import yaml
 from modula.atom import Linear
 from modula.bond import ReLU
+from omegaconf import OmegaConf
 from PIL import Image
 from tqdm import tqdm
 
@@ -21,8 +22,7 @@ parser.add_argument("-c", "--config", type=str, help="path to config .yaml")
 args = parser.parse_args()
 config_path = args.config
 
-with open(config_path) as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
+config = OmegaConf.load(config_path)
 
 batch_size = config["batch_size"]
 H = config["img_height"]
@@ -34,7 +34,6 @@ seed = config["seed"]
 val_freq = config["val_freq"]
 folder = Path(config["out_folder"])
 img_path = config["img_path"]
-dualize_gradients = config["dualize_gradients"]
 config_opt = config["optimizer"]
 
 folder.mkdir(parents=True, exist_ok=True)
@@ -64,22 +63,12 @@ targets = target[None].reshape(-1, C)
 input_dim = inputs.shape[-1]
 output_dim = targets.shape[-1]
 
-if dualize_gradients:
-    log.info("Dualizing gradients")
-    mlp = Linear(output_dim, width)
-    mlp @= ReLU()
-    mlp @= Linear(width, width)
-    mlp @= ReLU()
-    mlp @= Linear(width, input_dim * 2)
-    mlp @= FourierFeats(input_dim, input_dim)
-else:
-    log.info("Not dualizing gradients")
-    mlp = LinearSimple(output_dim, width)
-    mlp @= ReLU()
-    mlp @= LinearSimple(width, width)
-    mlp @= ReLU()
-    mlp @= LinearSimple(width, input_dim * 2)
-    mlp @= FourierFeats(input_dim, input_dim)
+mlp = Linear(output_dim, width)
+mlp @= ReLU()
+mlp @= Linear(width, width)
+mlp @= ReLU()
+mlp @= Linear(width, input_dim * 2)
+mlp @= FourierFeats(input_dim, input_dim)
 
 print(mlp)
 
@@ -106,18 +95,20 @@ for step in tqdm(range(steps)):
     batch_inputs, batch_targets = inputs[idxs], targets[idxs]
     # compute loss and gradient of weights
     loss, grad_w = mse_and_grad(w, batch_inputs, batch_targets)
-    # dualize gradient
-    d_w = mlp.dualize(grad_w)
+
+    if config.pre_dual:  # like in https://github.com/Arongil/lipschitz-transformers/blob/main/trainer.py#L50
+        grad_w = mlp.dualize(grad_w)
 
     # compute scheduled learning rate
-    lr = get_lr(schedule=config_opt["schedule"], lr=config_opt["lr"], step=step, steps=steps)
+    lr = get_lr(schedule=config_opt.schedule, lr=config_opt.lr, step=step, steps=steps)
 
-    _, opt_state, updates = optim.update(w, d_w, opt_state)
+    _, opt_state, updates = optim.update(w, grad_w, opt_state)
+    if config.post_dual:  # like in https://github.com/Arongil/lipschitz-transformers/blob/main/trainer.py#L57
+        updates = mlp.dualize(updates)
 
     max_update_norm = lr
-    w_decayed = [weight * (1 - config_opt["wd"] * max_update_norm) for weight in w]
+    w_decayed = [weight * (1 - config_opt.wd * max_update_norm) for weight in w]
     w = [weight_decayed - lr * update for weight_decayed, update in zip(w_decayed, updates)]
-
     # # update weights
     # w = [weight - lr * d_weight for weight, d_weight in zip(w, d_w)]
 

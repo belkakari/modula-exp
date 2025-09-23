@@ -10,6 +10,7 @@ dependencies = [
     "matplotlib>=3.10.6",
     "modula",
     "numpy>=2.3.3",
+    "omegaconf>=2.3.0",
     "opencv-python>=4.11.0.86",
     "pillow>=11.3.0",
     "pre-commit>=4.3.0",
